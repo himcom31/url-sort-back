@@ -8,11 +8,12 @@ const path = require("path");
 
 dotenv.config();
 
+const PORT = process.env.PORT || 5000;
+const BASE_URL = process.env.BASE_URL || `http://localhost:${PORT}`;
+
 const app = express();
 app.use(express.json());
 app.use(cors());
-
-// Auto set BASE_URL if not provided
 
 // MongoDB connection
 mongoose
@@ -20,8 +21,8 @@ mongoose
     useNewUrlParser: true,
     useUnifiedTopology: true,
   })
-  .then(() => console.log('✅ MongoDB connected'))
-  .catch((err) => console.error('❌ MongoDB connection error:', err));
+  .then(() => console.log("✅ MongoDB connected"))
+  .catch((err) => console.error("❌ MongoDB connection error:", err));
 
 // Schema
 const urlSchema = new mongoose.Schema({
@@ -30,15 +31,15 @@ const urlSchema = new mongoose.Schema({
   date: { type: Date, default: Date.now },
 });
 
-const Url = mongoose.model('Url', urlSchema);
+const Url = mongoose.model("Url", urlSchema);
 
 // POST - create short link
-app.post('/api/shorten', async (req, res) => {
+app.post("/api/shorten", async (req, res) => {
   const { longUrl } = req.body;
-  if (!longUrl) return res.status(400).json({ error: 'longUrl is required' });
+  if (!longUrl) return res.status(400).json({ error: "longUrl is required" });
 
   if (!validUrl.isUri(longUrl)) {
-    return res.status(400).json({ error: 'Invalid URL' });
+    return res.status(400).json({ error: "Invalid URL" });
   }
 
   try {
@@ -62,7 +63,7 @@ app.post('/api/shorten', async (req, res) => {
     res.json({ shortUrl: `${BASE_URL}/${shortCode}` });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: 'Server error' });
+    res.status(500).json({ error: "Server error" });
   }
 });
 
@@ -75,20 +76,20 @@ if (process.env.NODE_ENV === "production") {
 }
 
 // Redirect short URL
-app.get('/:shortCode', async (req, res) => {
+app.get("/:shortCode", async (req, res) => {
   try {
     const urlDoc = await Url.findOne({ shortCode: req.params.shortCode });
     if (urlDoc) {
       return res.redirect(urlDoc.longUrl);
     } else {
-      return res.status(404).json({ error: 'Short URL not found' });
+      return res.status(404).json({ error: "Short URL not found" });
     }
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: 'Server error' });
+    res.status(500).json({ error: "Server error" });
   }
 });
 
-const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+
 
