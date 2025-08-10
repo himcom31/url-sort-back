@@ -6,12 +6,13 @@ const { nanoid } = require("nanoid");
 const validUrl = require("valid-url");
 const path = require("path");
 
-
 dotenv.config();
 
 const app = express();
 app.use(express.json());
 app.use(cors());
+
+// Auto set BASE_URL if not provided
 
 // MongoDB connection
 mongoose
@@ -19,10 +20,10 @@ mongoose
     useNewUrlParser: true,
     useUnifiedTopology: true,
   })
-  .then(() => console.log('MongoDB connected'))
-  .catch((err) => console.error('MongoDB connection error:', err));
+  .then(() => console.log('✅ MongoDB connected'))
+  .catch((err) => console.error('❌ MongoDB connection error:', err));
 
-// Mongoose schema
+// Schema
 const urlSchema = new mongoose.Schema({
   longUrl: { type: String, required: true },
   shortCode: { type: String, required: true, unique: true },
@@ -31,7 +32,7 @@ const urlSchema = new mongoose.Schema({
 
 const Url = mongoose.model('Url', urlSchema);
 
-// POST /api/shorten
+// POST - create short link
 app.post('/api/shorten', async (req, res) => {
   const { longUrl } = req.body;
   if (!longUrl) return res.status(400).json({ error: 'longUrl is required' });
@@ -43,7 +44,7 @@ app.post('/api/shorten', async (req, res) => {
   try {
     let existing = await Url.findOne({ longUrl });
     if (existing) {
-      return res.json({ shortUrl: `${process.env.BASE_URL}/${existing.shortCode}` });
+      return res.json({ shortUrl: `${BASE_URL}/${existing.shortCode}` });
     }
 
     let shortCode;
@@ -58,7 +59,7 @@ app.post('/api/shorten', async (req, res) => {
     const newUrl = new Url({ longUrl, shortCode });
     await newUrl.save();
 
-    res.json({ shortUrl: `${process.env.BASE_URL}/${shortCode}` });
+    res.json({ shortUrl: `${BASE_URL}/${shortCode}` });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Server error' });
@@ -68,13 +69,12 @@ app.post('/api/shorten', async (req, res) => {
 // Serve frontend in production
 if (process.env.NODE_ENV === "production") {
   app.use(express.static(path.join(__dirname, "frontend", "build")));
-
   app.get("/*", (req, res) => {
     res.sendFile(path.resolve(__dirname, "frontend", "build", "index.html"));
   });
 }
 
-// GET /:shortCode -> redirect (this must be after production block)
+// Redirect short URL
 app.get('/:shortCode', async (req, res) => {
   try {
     const urlDoc = await Url.findOne({ shortCode: req.params.shortCode });
@@ -90,4 +90,5 @@ app.get('/:shortCode', async (req, res) => {
 });
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+
