@@ -6,10 +6,7 @@ const { nanoid } = require("nanoid");
 const validUrl = require("valid-url");
 const path = require("path");
 
-const PORT = process.env.PORT || 5000;
 
-// Safe BASE_URL with fallback
-const BASE_URL = process.env.BASE_URL || `http://localhost:${PORT}`;
 dotenv.config();
 
 const app = express();
