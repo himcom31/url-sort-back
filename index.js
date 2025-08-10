@@ -6,7 +6,6 @@ const { nanoid } = require("nanoid");
 const validUrl = require("valid-url");
 const path = require("path");
 
-
 dotenv.config();
 
 const app = express();
@@ -36,19 +35,16 @@ app.post('/api/shorten', async (req, res) => {
   const { longUrl } = req.body;
   if (!longUrl) return res.status(400).json({ error: 'longUrl is required' });
 
-  // Basic URL validation
   if (!validUrl.isUri(longUrl)) {
     return res.status(400).json({ error: 'Invalid URL' });
   }
 
   try {
-    // यदि पहले से मौजूद हो तो वही वापस कर दें
     let existing = await Url.findOne({ longUrl });
     if (existing) {
       return res.json({ shortUrl: `${process.env.BASE_URL}/${existing.shortCode}` });
     }
 
-    // unique shortCode बनाएं (collision से बचने के लिए loop)
     let shortCode;
     let tries = 0;
     do {
@@ -68,7 +64,16 @@ app.post('/api/shorten', async (req, res) => {
   }
 });
 
-// GET /:shortCode -> redirect
+// Serve frontend in production
+if (process.env.NODE_ENV === "production") {
+  app.use(express.static(path.join(__dirname, "frontend", "build")));
+
+  app.get("/*", (req, res) => {
+    res.sendFile(path.resolve(__dirname, "frontend", "build", "index.html"));
+  });
+}
+
+// GET /:shortCode -> redirect (this must be after production block)
 app.get('/:shortCode', async (req, res) => {
   try {
     const urlDoc = await Url.findOne({ shortCode: req.params.shortCode });
@@ -84,12 +89,4 @@ app.get('/:shortCode', async (req, res) => {
 });
 
 const PORT = process.env.PORT || 5000;
-if (process.env.NODE_ENV === "production") {
-  app.use(express.static(path.join(__dirname, "frontend/build")));
-
-  app.get("*", (req, res) => {
-    res.sendFile(path.resolve(__dirname, "frontend", "build", "index.html"));
-  });
-}
-
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
