@@ -9,7 +9,6 @@ const path = require("path");
 dotenv.config();
 
 const PORT = process.env.PORT || 5000;
-const BASE_URL = process.env.BASE_URL || `http://localhost:${PORT}`;
 
 const app = express();
 app.use(express.json());
@@ -44,8 +43,10 @@ app.post("/api/shorten", async (req, res) => {
 
   try {
     let existing = await Url.findOne({ longUrl });
+    const baseUrl = `${req.protocol}://${req.get("host")}`; // Dynamic Base URL
+
     if (existing) {
-      return res.json({ shortUrl: `${BASE_URL}/${existing.shortCode}` });
+      return res.json({ shortUrl: `${baseUrl}/${existing.shortCode}` });
     }
 
     let shortCode;
@@ -60,7 +61,7 @@ app.post("/api/shorten", async (req, res) => {
     const newUrl = new Url({ longUrl, shortCode });
     await newUrl.save();
 
-    res.json({ shortUrl: `${BASE_URL}/${shortCode}` });
+    res.json({ shortUrl: `${baseUrl}/${shortCode}` });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Server error" });
@@ -91,5 +92,6 @@ app.get("/:shortCode", async (req, res) => {
 });
 
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+
 
 
