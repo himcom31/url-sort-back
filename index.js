@@ -1,10 +1,10 @@
-import express from 'express';
-import mongoose from 'mongoose';
-import dotenv from 'dotenv';
-import cors from 'cors';
-import { nanoid } from 'nanoid';
-import validUrl from 'valid-url';
-import path from "path";
+const express = require("express");
+const mongoose = require("mongoose");
+const dotenv = require("dotenv");
+const cors = require("cors");
+const { nanoid } = require("nanoid");
+const validUrl = require("valid-url");
+const path = require("path");
 
 
 dotenv.config();
